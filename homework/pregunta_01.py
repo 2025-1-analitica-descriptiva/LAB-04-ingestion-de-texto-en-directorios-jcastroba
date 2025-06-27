@@ -71,3 +71,53 @@ def pregunta_01():
 
 
     """
+    import os
+    import pandas as pd
+    
+    # Crear la carpeta output si no existe
+    os.makedirs("files/output", exist_ok=True)
+    
+    def process_dataset(dataset_type):
+        """Procesa un dataset (train o test) y retorna un DataFrame"""
+        data = []
+        dataset_path = f"files/input/{dataset_type}"
+        
+        # Procesar cada sentimiento
+        for sentiment in ['negative', 'positive', 'neutral']:
+            sentiment_path = os.path.join(dataset_path, sentiment)
+            
+            if os.path.exists(sentiment_path):
+                # Leer todos los archivos .txt en la carpeta del sentimiento
+                for filename in os.listdir(sentiment_path):
+                    if filename.endswith('.txt'):
+                        file_path = os.path.join(sentiment_path, filename)
+                        
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as file:
+                                phrase = file.read().strip()
+                                data.append({
+                                    'phrase': phrase,
+                                    'target': sentiment
+                                })
+                        except Exception as e:
+                            # Si hay error de encoding, intentar con latin-1
+                            try:
+                                with open(file_path, 'r', encoding='latin-1') as file:
+                                    phrase = file.read().strip()
+                                    data.append({
+                                        'phrase': phrase,
+                                        'target': sentiment
+                                    })
+                            except Exception:
+                                print(f"Error leyendo archivo {file_path}: {e}")
+                                continue
+        
+        return pd.DataFrame(data)
+    
+    # Procesar el dataset de entrenamiento
+    train_df = process_dataset('train')
+    train_df.to_csv('files/output/train_dataset.csv', index=False)
+    
+    # Procesar el dataset de prueba
+    test_df = process_dataset('test')
+    test_df.to_csv('files/output/test_dataset.csv', index=False)
